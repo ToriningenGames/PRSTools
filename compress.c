@@ -104,7 +104,7 @@ void compress(uint8_t *source, int insize, struct compnode *nodes)
         }
         nodes[nodein].offset = 0;
         nodes[nodein].size = 0;
-        nodes[nodein].type = m_long;
+        nodes[nodein].type = m_done;
 }
 
 void addControl(uint8_t **c, uint8_t **d, struct compnode *node)
@@ -213,6 +213,31 @@ void addControl(uint8_t **c, uint8_t **d, struct compnode *node)
                                 *data++ = (node->offset & 0x1FE0) >> 5;
                         }
                         break;
+                case m_done :
+                        //Long with zero offset and size
+                        if (!bits) {
+                                //no room in control byte
+                                control = data++;
+                                *control = 0;
+                                bits = 8;
+                        }
+                        if (bits == 1) {
+                                //Control split across two bytes
+                                *control |= 0 << (8-bits);
+                                control = data++;
+                                *control = 0;
+                                bits = 8;
+                                *control |= 1 << (8-bits);
+                                bits--;
+                        } else {
+                                //Plenty of space
+                                *control |= 0 << (8-bits);
+                                bits--;
+                                *control |= 1 << (8-bits);
+                                bits--;
+                        }
+                        *data++ = 0;
+                        *data++ = 0;
         }
         *c = control;
         *d = data;
@@ -223,7 +248,7 @@ int store(uint8_t *data, struct compnode *nodes)
         uint8_t *start = data;
         uint8_t *control = data;
         //While there are nodes
-        for (; nodes->type != m_long || nodes->offset != 0 || nodes->size != 0; nodes++) {
+        for (; nodes->type != m_done; nodes++) {
                 addControl(&control, &data, nodes);
         }
         //One more for the terminus
