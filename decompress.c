@@ -99,7 +99,11 @@ void decompress(uint8_t *indata, int insize, struct compnode *nodes)
                                 nodes->size = *indata & 0x07;
                                 nodes->offset = (*indata++ & 0xF8) >> 3;
                                 nodes->offset |= *indata++ << 5;
+                                //Special detect for the end phrase
                                 if (!nodes->size && nodes->offset) {
+                                        nodes->size--;
+                                }
+                                if (!nodes->size) {
                                         nodes->size = *indata++;
                                 } else {
                                         nodes->size++;
