@@ -102,8 +102,6 @@ void compress(uint8_t *source, int insize, struct compnode *nodes)
                         }
                 }
         }
-        nodes[nodein].offset = 0;
-        nodes[nodein].size = 0;
         nodes[nodein].type = m_done;
 }
 
@@ -214,7 +212,6 @@ void addControl(uint8_t **c, uint8_t **d, struct compnode *node)
                         }
                         break;
                 case m_done :
-                        //Long with zero offset and size
                         if (!bits) {
                                 //no room in control byte
                                 control = data++;
