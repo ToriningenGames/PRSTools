@@ -114,6 +114,34 @@ void decompress(uint8_t *indata, int insize, struct compnode *nodes)
         }
 }
 
+int getSize(struct compnode *nodes)
+{
+        int size = 0;
+        for (; nodes->type != m_long || nodes->offset != 0 || nodes->size != 0; nodes++) {
+                switch (nodes->type) {
+                        case m_direct :
+                                size++;
+                                break;
+                        case m_short3 :
+                                size += 5;
+                                break;
+                        case m_short2 :
+                                size += 4;
+                                break;
+                        case m_short1 :
+                                size += 3;
+                                break;
+                        case m_short0 :
+                                size += 2;
+                                break;
+                        case m_long :
+                                size += nodes->size + 1;
+                                break;
+                }
+        }
+        return size;
+}
+
 int store(uint8_t *data, struct compnode *nodes)
 {
         int size;
@@ -161,7 +189,8 @@ int main(int argc, char **argv)
         struct compnode *nodes = malloc(sizeof(*nodes)*insize);
         decompress(indata, insize, nodes);
         int outsize = 0;
-        uint8_t *outdata = indata;
+        free(indata);
+        uint8_t *outdata = malloc(getSize(nodes));
         outsize = store(outdata, nodes);
         free(nodes);
         FILE *outfile = fopen(argv[2], "wb");
